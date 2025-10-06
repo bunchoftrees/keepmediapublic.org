@@ -16,7 +16,7 @@ export async function GET(
 
   try {
     // Get organization by slug (or ID for backwards compatibility)
-    const station = getOrganization(slug);
+    const station = await getOrganization(slug);
 
     if (!station) {
       return NextResponse.json(

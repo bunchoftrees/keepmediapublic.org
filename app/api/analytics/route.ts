@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === 'impression') {
-      trackImpression(organizationId, slot, userRegion);
+      await trackImpression(organizationId, slot, userRegion);
     } else if (type === 'click') {
       if (!clickType) {
         return NextResponse.json(
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      trackClick(organizationId, clickType, slot, userRegion);
+      await trackClick(organizationId, clickType, slot, userRegion);
     } else {
       return NextResponse.json(
         { error: 'Invalid type' },

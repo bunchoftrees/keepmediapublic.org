@@ -300,7 +300,10 @@ export async function findNearestStations(
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = 3959 * c; // Earth radius in miles
 
-    const org = row.organizations as Organization;
+    // Supabase returns foreign key relations as arrays, take first element
+    const orgData = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations;
+    if (!orgData) continue;
+    const org = orgData as Organization;
 
     // Keep only the closest transmitter for each organization
     const existing = orgMap.get(org.id);

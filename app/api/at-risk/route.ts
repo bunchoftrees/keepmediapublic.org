@@ -3,7 +3,7 @@ import { getAtRiskStations } from '@/lib/db/queries';
 
 export async function GET() {
   try {
-    const stations = getAtRiskStations(3);
+    const stations = await getAtRiskStations(3);
 
     return NextResponse.json({
       stations
