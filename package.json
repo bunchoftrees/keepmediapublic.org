@@ -21,9 +21,8 @@
     "@types/react-dom": "^18",
     "@tailwindcss/postcss": "^4",
     "tailwindcss": "^4",
-    "eslint": "^9",
+    "eslint": "^8.57.0",
     "eslint-config-next": "14.2.21",
-    "@eslint/eslintrc": "^3",
     "tsx": "^4.19.2"
   }
 }
