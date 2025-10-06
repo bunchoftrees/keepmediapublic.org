@@ -207,12 +207,20 @@ export async function searchOrganizations(query: string, limit: number = 20): Pr
   orgResults?.forEach(org => allOrgs.set(org.id, org as Organization));
   txResults?.forEach(tx => {
     if (tx.organizations) {
-      allOrgs.set(tx.organizations.id, tx.organizations as Organization);
+      // Supabase returns foreign key relations as arrays, take first element
+      const org = Array.isArray(tx.organizations) ? tx.organizations[0] : tx.organizations;
+      if (org) {
+        allOrgs.set(org.id, org as Organization);
+      }
     }
   });
   cityResults?.forEach(city => {
     if (city.organizations) {
-      allOrgs.set(city.organizations.id, city.organizations as Organization);
+      // Supabase returns foreign key relations as arrays, take first element
+      const org = Array.isArray(city.organizations) ? city.organizations[0] : city.organizations;
+      if (org) {
+        allOrgs.set(org.id, org as Organization);
+      }
     }
   });
 
