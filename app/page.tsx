@@ -224,37 +224,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* At-Risk Stations That Need Help */}
-        {atRiskStations.length > 0 && (
-          <section className="mb-12">
-            <div className="mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Stations in Critical Need</h2>
-              <p className="text-gray-600 mt-1">
-                These stations face an uncertain future without community support
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {atRiskStations.map((station) => (
-                <div key={station.id}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-gray-600 uppercase">
-                      {station.station_type === 'Radio' ? '📻' : '📺'} {station.station_type}
-                    </h3>
-                    {station.risk_tier && (
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${
-                        station.risk_tier === 'Critical' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {station.risk_tier}
-                      </span>
-                    )}
-                  </div>
-                  <StationCard station={station} slot="at-risk" userRegion={userRegion} />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Solidarity Stations */}
         {solidarityStations.length > 0 && (
           <section className="mb-12">
