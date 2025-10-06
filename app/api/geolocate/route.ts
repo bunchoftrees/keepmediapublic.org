@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Get IP from headers (handles proxies)
     const forwarded = request.headers.get('x-forwarded-for');
-    let ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip');
+    const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip');
 
     // If we have a local/private IP, use ipapi.co without an IP parameter
     // which will automatically detect the server's public IP

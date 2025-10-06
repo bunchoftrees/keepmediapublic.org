@@ -15,7 +15,6 @@ export default function Home() {
   const [atRiskStations, setAtRiskStations] = useState<Organization[]>([]);
   const [solidarityStations, setSolidarityStations] = useState<Organization[]>([]);
   const [userRegion, setUserRegion] = useState<string>('');
-  const [userLocation, setUserLocation] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [zipInput, setZipInput] = useState('');
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -38,9 +37,7 @@ export default function Home() {
       const geoResponse = await fetch('/api/geolocate');
       const geoData = await geoResponse.json();
       const regionCode = geoData.region_code || '';
-      const locationName = geoData.city && geoData.region ? `${geoData.city}, ${geoData.region_code}` : regionCode;
       setUserRegion(regionCode);
-      setUserLocation(locationName);
 
       // Get nearest stations by lat/lon (get top 3 within 100 miles)
       if (geoData.latitude && geoData.longitude) {
@@ -116,7 +113,6 @@ export default function Home() {
       const geoResponse = await fetch(`/api/geolocate?zip=${input}`);
       const geoData = await geoResponse.json();
       const regionCode = geoData.region_code || '';
-      const locationName = geoData.city && geoData.region ? `${geoData.city}, ${geoData.region_code}` : regionCode;
       setUserRegion(regionCode);
 
       // Get nearest stations by lat/lon (get top 5 within 100 miles)
@@ -175,7 +171,7 @@ export default function Home() {
             {quote && (
               <div className="hidden md:block max-w-md border-l-4 border-blue-500 pl-4">
                 <blockquote className="text-gray-700 italic">
-                  "{quote.quote_text}"
+                  &ldquo;{quote.quote_text}&rdquo;
                 </blockquote>
                 <p className="text-sm text-gray-600 mt-2">
                   — {quote.person}, <span className="font-medium">{quote.show_or_role}</span>

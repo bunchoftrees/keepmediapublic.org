@@ -93,7 +93,7 @@ export default function GlobalBanner() {
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
           <h2 className="text-xl font-bold text-gray-900 mb-3">Find Your Local Station</h2>
           <p className="text-gray-600 mb-4">
-            We couldn't detect your location automatically. Please enter your ZIP code to find your nearest public media station.
+            We couldn&apos;t detect your location automatically. Please enter your ZIP code to find your nearest public media station.
           </p>
           <form onSubmit={handleZipSubmit} className="flex gap-3">
             <input

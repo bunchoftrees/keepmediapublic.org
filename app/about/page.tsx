@@ -34,9 +34,9 @@ export default function About() {
               that relied on CPB funding now face an existential crisis.
             </p>
             <p className="text-gray-700 mb-4">
-              When CPB funding vanished, many people wanted to help but didn't know which stations needed support most urgently.
+              When CPB funding vanished, many people wanted to help but didn&apos;t know which stations needed support most urgently.
               <b>Keep Media Public</b> solves this by making station financial data accessible and actionable, helping donors direct their
-              support where it's needed most.
+              support where it&apos;s needed most.
             </p>
           </section>
 
@@ -48,10 +48,10 @@ export default function About() {
             <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
               <li>Your nearest local stations with direct donation links</li>
               <li>Stations in critical need across the country</li>
-              <li>Each station's dependency on CPB funding (when available)</li>
+              <li>Each station&apos;s dependency on CPB funding (when available)</li>
             </ul>
             <p className="text-gray-700 mb-4">
-              Clicking "Donate Now" takes you directly to the station's donation page. All contributions go straight to the
+              Clicking &ldquo;Donate Now&rdquo; takes you directly to the station&apos;s donation page. All contributions go straight to the
               stations—<b>Keep Media Public</b> takes no fees or commissions.
             </p>
           </section>
@@ -101,12 +101,12 @@ export default function About() {
             </p>
             <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
               <li><strong>No fees or commissions:</strong> 100% of your donation goes to the station. This site takes nothing.</li>
-              <li><strong>Minimal data collection:</strong> We log only what's needed to ensure fair station exposure—no personal information, no tracking cookies, no data sharing.</li>
+              <li><strong>Minimal data collection:</strong> We log only what&apos;s needed to ensure fair station exposure—no personal information, no tracking cookies, no data sharing.</li>
               <li><strong>Open methodology:</strong> Risk calculations and station selection algorithms are documented and verifiable.</li>
-              <li><strong>Direct donations:</strong> Clicking "Donate Now" takes you directly to each station's own donation page.</li>
+              <li><strong>Direct donations:</strong> Clicking &ldquo;Donate Now&rdquo; takes you directly to each station&apos;s own donation page.</li>
             </ul>
             <p className="text-gray-700 mb-4">
-              The "Stations That Need Your Help" section uses weighted rotation to ensure equitable exposure. Stations that have
+              The &ldquo;Stations That Need Your Help&rdquo; section uses weighted rotation to ensure equitable exposure. Stations that have
               received fewer recent impressions or donations are more likely to be shown, preventing any single station from
               dominating the list.
             </p>
