@@ -15,6 +15,7 @@ export default function About() {
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-6">About Keep Media Public</h1>
+        <p className="text-2xl font-bold text-gray-900 mb-4">This is made possible by viewers like you.</p>
 
         <div className="prose prose-lg max-w-none">
           <section className="mb-8">
