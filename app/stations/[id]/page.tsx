@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getOrganization } from '@/lib/db/queries';
-import type { OrganizationWithTransmitters } from '@/lib/db/queries';
 
 const riskColors = {
   Critical: 'bg-red-100 text-red-900 border-red-400',
