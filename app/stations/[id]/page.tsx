@@ -49,7 +49,7 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
     : org.state_name;
 
   // TODO: Sister stations - would need to add licensee_name to organizations table
-  const sisterStations: OrganizationWithTransmitters[] = [];
+  // const sisterStations: OrganizationWithTransmitters[] = [];
 
   return (
     <div className="min-h-screen bg-gray-50">

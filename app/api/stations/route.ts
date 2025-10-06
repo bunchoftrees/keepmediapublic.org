@@ -3,13 +3,8 @@ import {
   getAllOrganizations,
   getOrganizationsByState,
   getOrganizationsByRiskTier,
-  findNearestStations,
-  type Organization
+  findNearestStations
 } from '@/lib/db/queries';
-
-interface StationResponse extends Organization {
-  distance?: number;
-}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
