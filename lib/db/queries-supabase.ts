@@ -462,7 +462,6 @@ export async function getAtRiskStations(count: number = 3): Promise<Organization
       cumulativeWeight += remaining[j].weight / remainingTotal;
       if (random <= cumulativeWeight) {
         // Extract only Organization fields (impressions and clicks are removed via destructuring)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { impressions, clicks, ...orgData } = remaining[j].station;
         selected.push(orgData as Organization);
         remaining.splice(j, 1);
