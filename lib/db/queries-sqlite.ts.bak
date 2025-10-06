@@ -1,0 +1,424 @@
+/**
+ * Database query functions for Keep Media Public
+ * Uses the new enriched schema with organizations, transmitters, and coverage_cities tables
+ */
+
+import db from './index';
+
+// Type definitions matching the new database schema
+export interface Organization {
+  id: string;
+  slug: string;
+  station_name: string;
+  state: string;
+  state_name: string;
+  branding: string | null;
+  website_url: string | null;
+  primary_call_sign: string;
+  transmitter_count: number;
+  coverage_population: number | null;
+
+  // Financial data
+  cpb_funding: number | null;
+  total_revenue: number | null;
+  cpb_dependency_pct: number | null;
+  risk_tier: string | null;
+
+  // Network data
+  is_pbs_member: boolean;
+  network_affiliation: string | null;
+  station_type: string;
+
+  // Data quality
+  cpb_funding_source: string;
+  revenue_source: string;
+  coordinates_source: string;
+  network_source: string;
+  overall_quality: string;
+
+  // Metadata
+  updated_at: string;
+}
+
+export interface Transmitter {
+  id: string;
+  organization_id: string;
+  call_sign: string;
+  city: string | null;
+  channel: string | null;
+  zip_code: string | null;
+  fcc_facility_id: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  has_coordinates: boolean;
+  has_zip_code: boolean;
+}
+
+export interface CoverageCity {
+  id: number;
+  organization_id: string;
+  city_name: string;
+}
+
+export interface OrganizationWithTransmitters extends Organization {
+  transmitters: Transmitter[];
+  coverage_cities: string[];
+}
+
+/**
+ * Get all organizations with optional filtering
+ */
+export function getAllOrganizations(filters?: {
+  state?: string;
+  risk_tier?: string;
+  network_affiliation?: string;
+  limit?: number;
+  offset?: number;
+}): Organization[] {
+  let query = 'SELECT * FROM organizations';
+  const conditions: string[] = [];
+  const params: any[] = [];
+
+  if (filters?.state) {
+    conditions.push('state = ?');
+    params.push(filters.state);
+  }
+
+  if (filters?.risk_tier) {
+    conditions.push('risk_tier = ?');
+    params.push(filters.risk_tier);
+  }
+
+  if (filters?.network_affiliation) {
+    conditions.push('network_affiliation = ?');
+    params.push(filters.network_affiliation);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY station_name';
+
+  if (filters?.limit) {
+    query += ' LIMIT ?';
+    params.push(filters.limit);
+  }
+
+  if (filters?.offset) {
+    query += ' OFFSET ?';
+    params.push(filters.offset);
+  }
+
+  const stmt = db.prepare(query);
+  return stmt.all(...params) as Organization[];
+}
+
+/**
+ * Get a single organization by ID or slug
+ */
+export function getOrganization(idOrSlug: string): OrganizationWithTransmitters | null {
+  // Try by ID first, then by slug
+  const stmt = db.prepare(`
+    SELECT * FROM organizations
+    WHERE id = ? OR slug = ?
+    LIMIT 1
+  `);
+
+  const org = stmt.get(idOrSlug, idOrSlug) as Organization | undefined;
+
+  if (!org) return null;
+
+  // Get transmitters
+  const transmittersStmt = db.prepare(`
+    SELECT * FROM transmitters
+    WHERE organization_id = ?
+    ORDER BY call_sign
+  `);
+  const transmitters = transmittersStmt.all(org.id) as Transmitter[];
+
+  // Get coverage cities
+  const citiesStmt = db.prepare(`
+    SELECT city_name FROM coverage_cities
+    WHERE organization_id = ?
+    ORDER BY city_name
+  `);
+  const cities = citiesStmt.all(org.id) as { city_name: string }[];
+  const coverage_cities = cities.map(c => c.city_name);
+
+  return {
+    ...org,
+    transmitters,
+    coverage_cities
+  };
+}
+
+/**
+ * Search organizations by name, call sign, city, or state
+ */
+export function searchOrganizations(query: string, limit: number = 20): Organization[] {
+  const searchPattern = `%${query}%`;
+
+  const stmt = db.prepare(`
+    SELECT DISTINCT o.*
+    FROM organizations o
+    LEFT JOIN transmitters t ON o.id = t.organization_id
+    LEFT JOIN coverage_cities c ON o.id = c.organization_id
+    WHERE
+      o.station_name LIKE ? OR
+      o.primary_call_sign LIKE ? OR
+      o.state LIKE ? OR
+      o.state_name LIKE ? OR
+      t.call_sign LIKE ? OR
+      t.city LIKE ? OR
+      c.city_name LIKE ?
+    ORDER BY o.station_name
+    LIMIT ?
+  `);
+
+  return stmt.all(
+    searchPattern, searchPattern, searchPattern, searchPattern,
+    searchPattern, searchPattern, searchPattern, limit
+  ) as Organization[];
+}
+
+/**
+ * Get organizations by risk tier
+ */
+export function getOrganizationsByRiskTier(riskTier: string): Organization[] {
+  const stmt = db.prepare(`
+    SELECT * FROM organizations
+    WHERE risk_tier = ?
+    ORDER BY cpb_dependency_pct DESC
+  `);
+
+  return stmt.all(riskTier) as Organization[];
+}
+
+/**
+ * Get organizations by state
+ */
+export function getOrganizationsByState(state: string): Organization[] {
+  const stmt = db.prepare(`
+    SELECT * FROM organizations
+    WHERE state = ?
+    ORDER BY station_name
+  `);
+
+  return stmt.all(state) as Organization[];
+}
+
+/**
+ * Find nearest stations to a given coordinate
+ */
+export function findNearestStations(
+  lat: number,
+  lon: number,
+  limit: number = 10
+): Array<Organization & { distance: number }> {
+  // Get all organizations with transmitter coordinates
+  const stmt = db.prepare(`
+    SELECT o.*, t.latitude, t.longitude
+    FROM organizations o
+    JOIN transmitters t ON o.id = t.organization_id
+    WHERE t.latitude IS NOT NULL AND t.longitude IS NOT NULL
+  `);
+
+  const rows = stmt.all() as Array<Organization & { latitude: number; longitude: number }>;
+
+  // Calculate distances and group by organization ID, keeping only the closest transmitter
+  const orgMap = new Map<string, Organization & { distance: number }>();
+
+  for (const row of rows) {
+    const lat1 = lat * Math.PI / 180;
+    const lat2 = row.latitude * Math.PI / 180;
+    const deltaLat = (row.latitude - lat) * Math.PI / 180;
+    const deltaLon = (row.longitude - lon) * Math.PI / 180;
+
+    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+              Math.cos(lat1) * Math.cos(lat2) *
+              Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = 3959 * c; // Earth radius in miles
+
+    // Remove latitude/longitude from the returned object
+    const { latitude, longitude, ...orgData } = row;
+
+    // Keep only the closest transmitter for each organization
+    const existing = orgMap.get(row.id);
+    if (!existing || distance < existing.distance) {
+      orgMap.set(row.id, { ...orgData, distance });
+    }
+  }
+
+  // Convert map to array, sort by distance, and return top results
+  return Array.from(orgMap.values())
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, limit);
+}
+
+/**
+ * Get database statistics
+ */
+export function getDatabaseStats() {
+  const orgCountStmt = db.prepare('SELECT COUNT(*) as count FROM organizations');
+  const txCountStmt = db.prepare('SELECT COUNT(*) as count FROM transmitters');
+  const cityCountStmt = db.prepare('SELECT COUNT(*) as count FROM coverage_cities');
+
+  const totalFundingStmt = db.prepare(`
+    SELECT SUM(cpb_funding) as total FROM organizations WHERE cpb_funding IS NOT NULL
+  `);
+
+  const riskTiersStmt = db.prepare(`
+    SELECT risk_tier, COUNT(*) as count
+    FROM organizations
+    GROUP BY risk_tier
+  `);
+
+  const statesStmt = db.prepare(`
+    SELECT state, COUNT(*) as count
+    FROM organizations
+    GROUP BY state
+    ORDER BY count DESC
+  `);
+
+  return {
+    organizations: (orgCountStmt.get() as { count: number }).count,
+    transmitters: (txCountStmt.get() as { count: number }).count,
+    coverage_cities: (cityCountStmt.get() as { count: number }).count,
+    total_cpb_funding: (totalFundingStmt.get() as { total: number | null }).total || 0,
+    risk_tiers: riskTiersStmt.all() as { risk_tier: string; count: number }[],
+    states: statesStmt.all() as { state: string; count: number }[]
+  };
+}
+
+/**
+ * Get all unique states with organization counts
+ */
+export function getStatesWithCounts(): Array<{ state: string; state_name: string; count: number }> {
+  const stmt = db.prepare(`
+    SELECT state, state_name, COUNT(*) as count
+    FROM organizations
+    GROUP BY state, state_name
+    ORDER BY state_name
+  `);
+
+  return stmt.all() as Array<{ state: string; state_name: string; count: number }>;
+}
+
+/**
+ * Get at-risk stations using fair weighted selection
+ *
+ * Algorithm:
+ * 1. Get all Critical and High risk stations
+ * 2. Calculate exposure score for each station based on recent impressions and clicks
+ * 3. Weight by risk tier (Critical=2x, High=1x) and inverse exposure
+ * 4. Select top 3 with weighted random selection
+ *
+ * This ensures fair distribution - stations that have been shown/clicked less recently
+ * get higher weight, preventing the same stations from dominating.
+ */
+export function getAtRiskStations(count: number = 3): Organization[] {
+  // Get all high-risk stations with their exposure metrics (last 7 days)
+  const stmt = db.prepare(`
+    SELECT
+      o.*,
+      COALESCE(impressions.count, 0) as impression_count,
+      COALESCE(clicks.count, 0) as click_count
+    FROM organizations o
+    LEFT JOIN (
+      SELECT organization_id, COUNT(*) as count
+      FROM station_impressions
+      WHERE slot = 'at-risk'
+        AND shown_at >= datetime('now', '-7 days')
+      GROUP BY organization_id
+    ) impressions ON o.id = impressions.organization_id
+    LEFT JOIN (
+      SELECT organization_id, COUNT(*) as count
+      FROM station_clicks
+      WHERE slot = 'at-risk'
+        AND click_type = 'donate'
+        AND clicked_at >= datetime('now', '-7 days')
+      GROUP BY organization_id
+    ) clicks ON o.id = clicks.organization_id
+    WHERE o.risk_tier IN ('Critical', 'High')
+    ORDER BY o.cpb_dependency_pct DESC
+  `);
+
+  const stations = stmt.all() as Array<Organization & { impression_count: number; click_count: number }>;
+
+  if (stations.length === 0) {
+    return [];
+  }
+
+  // Calculate weights for each station
+  // Weight = (risk_multiplier) / (1 + impression_count + 2 * click_count)
+  // Higher risk and lower exposure = higher weight
+  const weighted = stations.map(station => {
+    const riskMultiplier = station.risk_tier === 'Critical' ? 2.0 : 1.0;
+    const exposureScore = 1 + station.impression_count + (2 * station.click_count);
+    const weight = riskMultiplier / exposureScore;
+
+    return {
+      station,
+      weight
+    };
+  });
+
+  // Normalize weights to sum to 1
+  const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
+  const normalized = weighted.map(item => ({
+    station: item.station,
+    weight: item.weight / totalWeight
+  }));
+
+  // Weighted random selection without replacement
+  const selected: Organization[] = [];
+  const remaining = [...normalized];
+
+  for (let i = 0; i < Math.min(count, stations.length); i++) {
+    // Calculate cumulative weights
+    let cumulativeWeight = 0;
+    const random = Math.random();
+
+    // Recalculate total for remaining stations
+    const remainingTotal = remaining.reduce((sum, item) => sum + item.weight, 0);
+
+    for (let j = 0; j < remaining.length; j++) {
+      cumulativeWeight += remaining[j].weight / remainingTotal;
+      if (random <= cumulativeWeight) {
+        // Extract only Organization fields, removing the extra tracking fields
+        const { impression_count, click_count, ...orgData } = remaining[j].station;
+        selected.push(orgData as Organization);
+        remaining.splice(j, 1);
+        break;
+      }
+    }
+  }
+
+  return selected;
+}
+
+/**
+ * Track station impression
+ */
+export function trackImpression(organizationId: string, slot: string, userRegion?: string) {
+  const stmt = db.prepare(`
+    INSERT INTO station_impressions (organization_id, slot, user_region)
+    VALUES (?, ?, ?)
+  `);
+
+  stmt.run(organizationId, slot, userRegion || null);
+}
+
+/**
+ * Track station click
+ */
+export function trackClick(organizationId: string, clickType: 'donate' | 'detail', slot: string, userRegion?: string) {
+  const stmt = db.prepare(`
+    INSERT INTO station_clicks (organization_id, click_type, slot, user_region)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  stmt.run(organizationId, clickType, slot, userRegion || null);
+}

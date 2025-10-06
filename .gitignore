@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database
+/data
+*.db
+*.db-journal
+
+# setup
+SETUP_COMPLETE.md
+SUPABASE_MIGRATION.md
+/supabase/*
+/scripts/*
