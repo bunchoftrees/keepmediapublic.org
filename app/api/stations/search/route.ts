@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Search across station names, call signs, cities, and states
-    const stations = searchOrganizations(searchQuery, limit);
+    const stations = await searchOrganizations(searchQuery, limit);
 
     // For backwards compatibility with call_sign parameter, return single station
     if (callSign && !q) {
