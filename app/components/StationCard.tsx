@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { track } from '@vercel/analytics';
 import type { Organization } from '@/lib/db/queries';
 
 interface StationCardProps {
@@ -31,6 +32,7 @@ const stationTypeEmoji = {
 export default function StationCard({ station, slot, userRegion }: StationCardProps) {
   // Track impression when card is shown
   useEffect(() => {
+    // Track in Supabase (for weighted algorithm)
     fetch('/api/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -41,10 +43,19 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
         userRegion,
       }),
     }).catch(err => console.error('Analytics tracking failed:', err));
-  }, [station.id, slot, userRegion]);
+
+    // Track in Vercel Analytics
+    track('station_impression', {
+      stationId: station.id,
+      stationName: station.station_name,
+      slot,
+      riskTier: station.risk_tier || 'unknown',
+      userRegion: userRegion || 'unknown',
+    });
+  }, [station.id, station.station_name, station.risk_tier, slot, userRegion]);
 
   const handleDonate = () => {
-    // Track donate click
+    // Track donate click in Supabase
     fetch('/api/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -57,6 +68,16 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
       }),
     }).catch(err => console.error('Analytics tracking failed:', err));
 
+    // Track in Vercel Analytics
+    track('station_click', {
+      stationId: station.id,
+      stationName: station.station_name,
+      clickType: 'donate',
+      slot,
+      riskTier: station.risk_tier || 'unknown',
+      userRegion: userRegion || 'unknown',
+    });
+
     const params = new URLSearchParams({
       station_id: station.id,
       slot,
@@ -66,7 +87,7 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
   };
 
   const handleCardClick = () => {
-    // Track detail page click
+    // Track detail page click in Supabase
     fetch('/api/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -78,6 +99,16 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
         userRegion,
       }),
     }).catch(err => console.error('Analytics tracking failed:', err));
+
+    // Track in Vercel Analytics
+    track('station_click', {
+      stationId: station.id,
+      stationName: station.station_name,
+      clickType: 'detail',
+      slot,
+      riskTier: station.risk_tier || 'unknown',
+      userRegion: userRegion || 'unknown',
+    });
 
     window.location.href = `/stations/${station.slug}`;
   };

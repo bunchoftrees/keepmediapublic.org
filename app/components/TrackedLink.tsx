@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { track } from '@vercel/analytics';
 
 interface TrackedLinkProps {
   stationId: string;
@@ -24,7 +24,7 @@ export default function TrackedLink({
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
 
-    // Track the click
+    // Track the click in Supabase
     try {
       await fetch('/api/analytics', {
         method: 'POST',
@@ -40,6 +40,14 @@ export default function TrackedLink({
     } catch (err) {
       console.error('Analytics tracking failed:', err);
     }
+
+    // Track in Vercel Analytics
+    track('station_click', {
+      stationId,
+      clickType,
+      slot,
+      userRegion: userRegion || 'unknown',
+    });
 
     // Build URL with UTM parameters
     const url = new URL(stationWebsite);
