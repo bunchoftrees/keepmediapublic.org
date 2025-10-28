@@ -24,6 +24,12 @@ export default function TrackedLink({
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
 
+    // Get region from localStorage (prioritize this over prop)
+    const storedRegion = typeof window !== 'undefined'
+      ? localStorage.getItem('userRegion')
+      : null;
+    const regionToUse = storedRegion || userRegion;
+
     // Track the click in Supabase
     try {
       await fetch('/api/analytics', {
@@ -34,7 +40,7 @@ export default function TrackedLink({
           organizationId: stationId,
           clickType,
           slot,
-          userRegion,
+          userRegion: regionToUse,
         }),
       });
     } catch (err) {
@@ -46,7 +52,7 @@ export default function TrackedLink({
       stationId,
       clickType,
       slot,
-      userRegion: userRegion || 'unknown',
+      userRegion: regionToUse || 'unknown',
     });
 
     // Build URL with UTM parameters
@@ -55,8 +61,8 @@ export default function TrackedLink({
     url.searchParams.set('utm_medium', 'referral');
     url.searchParams.set('utm_campaign', 'station_support');
     url.searchParams.set('utm_content', `${slot}_${clickType}`);
-    if (userRegion) {
-      url.searchParams.set('utm_term', userRegion);
+    if (regionToUse) {
+      url.searchParams.set('utm_term', regionToUse);
     }
 
     // Open in new tab

@@ -38,6 +38,10 @@ export default function Home() {
       const geoData = await geoResponse.json();
       const regionCode = geoData.region_code || '';
       setUserRegion(regionCode);
+      // Store region in localStorage for UTM params
+      if (regionCode) {
+        localStorage.setItem('userRegion', regionCode);
+      }
 
       // Get nearest stations by lat/lon (get top 3 within 100 miles)
       if (geoData.latitude && geoData.longitude) {
@@ -114,6 +118,10 @@ export default function Home() {
       const geoData = await geoResponse.json();
       const regionCode = geoData.region_code || '';
       setUserRegion(regionCode);
+      // Store region in localStorage for UTM params
+      if (regionCode) {
+        localStorage.setItem('userRegion', regionCode);
+      }
 
       // Get nearest stations by lat/lon (get top 5 within 100 miles)
       if (geoData.latitude && geoData.longitude) {

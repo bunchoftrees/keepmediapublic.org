@@ -32,6 +32,12 @@ const stationTypeEmoji = {
 export default function StationCard({ station, slot, userRegion }: StationCardProps) {
   // Track impression when card is shown
   useEffect(() => {
+    // Get region from localStorage (prioritize this over prop)
+    const storedRegion = typeof window !== 'undefined'
+      ? localStorage.getItem('userRegion')
+      : null;
+    const regionToUse = storedRegion || userRegion;
+
     // Track in Supabase (for weighted algorithm)
     fetch('/api/analytics', {
       method: 'POST',
@@ -40,7 +46,7 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
         type: 'impression',
         organizationId: station.id,
         slot,
-        userRegion,
+        userRegion: regionToUse,
       }),
     }).catch(err => console.error('Analytics tracking failed:', err));
 
@@ -50,11 +56,17 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
       stationName: station.station_name,
       slot,
       riskTier: station.risk_tier || 'unknown',
-      userRegion: userRegion || 'unknown',
+      userRegion: regionToUse || 'unknown',
     });
   }, [station.id, station.station_name, station.risk_tier, slot, userRegion]);
 
   const handleDonate = () => {
+    // Get region from localStorage (prioritize this over prop)
+    const storedRegion = typeof window !== 'undefined'
+      ? localStorage.getItem('userRegion')
+      : null;
+    const regionToUse = storedRegion || userRegion;
+
     // Track donate click in Supabase
     fetch('/api/analytics', {
       method: 'POST',
@@ -64,7 +76,7 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
         organizationId: station.id,
         clickType: 'donate',
         slot,
-        userRegion,
+        userRegion: regionToUse,
       }),
     }).catch(err => console.error('Analytics tracking failed:', err));
 
@@ -75,18 +87,24 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
       clickType: 'donate',
       slot,
       riskTier: station.risk_tier || 'unknown',
-      userRegion: userRegion || 'unknown',
+      userRegion: regionToUse || 'unknown',
     });
 
     const params = new URLSearchParams({
       station_id: station.id,
       slot,
-      ...(userRegion && { region: userRegion }),
+      ...(regionToUse && { region: regionToUse }),
     });
     window.location.href = `/api/donate?${params}`;
   };
 
   const handleCardClick = () => {
+    // Get region from localStorage (prioritize this over prop)
+    const storedRegion = typeof window !== 'undefined'
+      ? localStorage.getItem('userRegion')
+      : null;
+    const regionToUse = storedRegion || userRegion;
+
     // Track detail page click in Supabase
     fetch('/api/analytics', {
       method: 'POST',
@@ -96,7 +114,7 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
         organizationId: station.id,
         clickType: 'detail',
         slot,
-        userRegion,
+        userRegion: regionToUse,
       }),
     }).catch(err => console.error('Analytics tracking failed:', err));
 
@@ -107,7 +125,7 @@ export default function StationCard({ station, slot, userRegion }: StationCardPr
       clickType: 'detail',
       slot,
       riskTier: station.risk_tier || 'unknown',
-      userRegion: userRegion || 'unknown',
+      userRegion: regionToUse || 'unknown',
     });
 
     window.location.href = `/stations/${station.slug}`;
