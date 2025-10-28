@@ -503,7 +503,7 @@ export async function trackImpression(organizationId: string, slot: string, user
 /**
  * Track station click
  */
-export async function trackClick(organizationId: string, clickType: 'donate' | 'detail', slot: string, userRegion?: string) {
+export async function trackClick(organizationId: string, clickType: 'donate' | 'detail' | 'visit', slot: string, userRegion?: string) {
   const { error } = await supabase
     .from('station_clicks')
     .insert({

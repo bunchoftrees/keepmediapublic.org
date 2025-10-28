@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getOrganization } from '@/lib/db/queries';
+import TrackedLink from '@/app/components/TrackedLink';
 
 const riskColors = {
   Critical: 'bg-red-100 text-red-900 border-red-400',
@@ -102,22 +103,24 @@ export default async function StationDetailPage({ params }: { params: Promise<{ 
           <div className="flex gap-4 mt-6">
             {org.website_url && (
               <>
-                <a
-                  href={org.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <TrackedLink
+                  stationId={org.id}
+                  stationWebsite={org.website_url}
+                  clickType="donate"
+                  slot="detail"
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md transition-colors text-lg"
                 >
                   Donate Now
-                </a>
-                <a
-                  href={org.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                </TrackedLink>
+                <TrackedLink
+                  stationId={org.id}
+                  stationWebsite={org.website_url}
+                  clickType="visit"
+                  slot="detail"
                   className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-3 px-8 rounded-md transition-colors"
                 >
                   Visit Website
-                </a>
+                </TrackedLink>
               </>
             )}
           </div>

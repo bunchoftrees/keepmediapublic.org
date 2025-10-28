@@ -28,8 +28,18 @@ export async function GET(request: NextRequest) {
     // Log the click
     await trackClick(stationId, 'donate', slot, userRegion);
 
-    // Redirect to station's website (which should have donation info)
-    return NextResponse.redirect(organization.website_url);
+    // Build URL with UTM parameters
+    const redirectUrl = new URL(organization.website_url);
+    redirectUrl.searchParams.set('utm_source', 'keepmediapublic');
+    redirectUrl.searchParams.set('utm_medium', 'referral');
+    redirectUrl.searchParams.set('utm_campaign', 'station_support');
+    redirectUrl.searchParams.set('utm_content', slot);
+    if (userRegion) {
+      redirectUrl.searchParams.set('utm_term', userRegion);
+    }
+
+    // Redirect to station's website with UTM parameters
+    return NextResponse.redirect(redirectUrl.toString());
   } catch (error) {
     console.error('Donate redirect error:', error);
     return NextResponse.json(
