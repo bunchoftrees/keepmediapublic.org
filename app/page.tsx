@@ -33,13 +33,17 @@ export default function Home() {
 
   async function loadStations() {
     try {
+      // Check if we already have a stored region from user's first visit
+      const storedRegion = localStorage.getItem('userRegion');
+
       // Get user location
       const geoResponse = await fetch('/api/geolocate');
       const geoData = await geoResponse.json();
       const regionCode = geoData.region_code || '';
       setUserRegion(regionCode);
-      // Store region in localStorage for UTM params
-      if (regionCode) {
+
+      // Only store region in localStorage if we don't have one yet (first visit)
+      if (!storedRegion && regionCode) {
         localStorage.setItem('userRegion', regionCode);
       }
 
@@ -118,10 +122,7 @@ export default function Home() {
       const geoData = await geoResponse.json();
       const regionCode = geoData.region_code || '';
       setUserRegion(regionCode);
-      // Store region in localStorage for UTM params
-      if (regionCode) {
-        localStorage.setItem('userRegion', regionCode);
-      }
+      // Don't update localStorage here - preserve the user's original region
 
       // Get nearest stations by lat/lon (get top 5 within 100 miles)
       if (geoData.latitude && geoData.longitude) {
